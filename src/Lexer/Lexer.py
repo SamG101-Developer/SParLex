@@ -3,6 +3,15 @@ import re
 
 
 class Lexer:
+    """
+    The Lexer class analyses the input code and returns a list of tokens. The code and the token set must be specified
+    in the constructor. The lex method is called to perform the lexical analysis and return the list of tokens. Custom
+    token sets can be created by subclassing TokenType and passing the subclass to the Lexer constructor.
+
+    Example:
+        - tokens = Lexer("let x = 5;", MyTokenType).lex()
+    """
+
     _code: str
     _token_class: type[TokenType]
 

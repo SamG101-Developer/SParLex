@@ -9,6 +9,16 @@ from src.Ast.Ast import Ast
 
 
 class ParserRuleHandler[T]:
+    """
+    The ParserRuleHandler class is used to handle the parsing of a rule. It is used to parse a rule once, zero or once,
+    zero or more times, or one or more times. The result of the parsing is stored in the "_result" attribute. The
+    "_rule" attribute is a function that returns the AST node.
+
+    This class also implements the "__or__" operator, allowing for a alternate rule to be defined. The "__or__" operator
+    is used to create a ParserAlternateRulesHandler object, which is used to parse one of the alternate rules. For a
+    rule to be combined into an alternate rule, the "for_alt" method must be called on the rule, to prevent bugs.
+    """
+
     ParserRule = Callable[[], T]
 
     _rule: ParserRule
@@ -72,6 +82,12 @@ class ParserRuleHandler[T]:
 
 
 class ParserAlternateRulesHandler(ParserRuleHandler):
+    """
+    The ParserAlternateRulesHandler class is used to handle the parsing of alternate rules. It is used to parse one of
+    the alternate rules. The "_parser_rule_handlers" attribute is a list of ParserRuleHandler objects that represent the
+    alternate rules.
+    """
+
     _parser_rule_handlers: List[ParserRuleHandler]
 
     def __init__(self, parser: Parser) -> None:
@@ -102,7 +118,14 @@ class ParserAlternateRulesHandler(ParserRuleHandler):
 
 # Decorator that wraps the function in a ParserRuleHandler
 def parser_rule(func) -> Callable[..., ParserRuleHandler]:
+    """
+    Decorator that wraps the function in a ParserRuleHandler.
+    :param func: The function to wrap.
+    :return: The wrapped function.
+    """
+
     @functools.wraps(func)
     def wrapper(self, *args) -> ParserRuleHandler:
         return ParserRuleHandler(self, functools.partial(func, self, *args))
+
     return wrapper

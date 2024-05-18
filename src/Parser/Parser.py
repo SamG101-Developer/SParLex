@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import List
 
 from src.Ast.ProgramAst import ProgramAst
@@ -9,7 +9,20 @@ from src.Parser.ParserRuleHandler import parser_rule
 from src.Utils.ErrorFormatter import ErrorFormatter
 
 
-class Parser:
+class Parser(ABC):
+    """
+    The Parser class is an abstract class that defines the interface for all the rules. Each rule is a method that
+    returns an AST node. The rules are called by the "parse" method, which is the entry point for the parser. Each rule
+    defined must be decorated with the "@parse_rule" decorator (see "parse_token").
+
+    The parser keeps track of the current token index and the list of tokens. It also keeps track of the errors that
+    occurred during the parsing process. The "parse_token" method is used to parse a single token, and it checks if the
+    token is the expected token. If the token is not the expected token, an error is raised.
+
+    When inheriting from the Parser class, the "parse" method must be implemented. The "parse" method is the entry point
+    for the parser and should return the root AST node - a "ProgramAst" type.
+    """
+
     _tokens: List[Token]
     _index: int
     _err_fmt: ErrorFormatter
@@ -24,10 +37,17 @@ class Parser:
         self._pos_shift = pos_shift
 
     def current_pos(self) -> int:
+        # Return the current position in the code.
         return self._index + self._pos_shift
 
     def current_tok(self) -> Token:
+        # Return the current token.
         return self._tokens[self._index]
+
+    @abstractmethod
+    def parse(self) -> ProgramAst:
+        # The entry point for the parser. This method should return the root AST node.
+        ...
 
     @parser_rule
     def parse_token(self, token_type: TokenType) -> TokenAst:
@@ -64,7 +84,3 @@ class Parser:
         r = TokenAst(c1, self.current_tok())
         self._index += 1
         return r
-
-    @abstractmethod
-    def parse(self) -> ProgramAst:
-        ...
