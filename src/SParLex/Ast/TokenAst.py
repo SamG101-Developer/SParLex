@@ -1,8 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
-from src.Lexer.Tokens import Token, TokenType
-from src.Ast.Ast import Ast
+from SParLex.Lexer.Tokens import Token, TokenType
+from SParLex.Ast.Ast import Ast
 
 
 @dataclass

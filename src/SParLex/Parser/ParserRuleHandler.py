@@ -2,10 +2,10 @@ from __future__ import annotations
 from typing import Callable, List, Optional
 import functools
 
-from src.Lexer.Tokens import TokenType
-from src.Parser.Parser import Parser
-from src.Parser.ParserError import ParserError
-from src.Ast.Ast import Ast
+from SParLex.Lexer.Tokens import TokenType
+from SParLex.Parser.Parser import Parser
+from SParLex.Parser.ParserError import ParserError
+from SParLex.Ast.Ast import Ast
 
 
 class ParserRuleHandler[T]:

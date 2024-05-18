@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from src.Ast.ProgramAst import ProgramAst
-from src.Ast.TokenAst import TokenAst
-from src.Lexer.Tokens import TokenType, Token
-from src.Parser.ParserError import ParserError
-from src.Parser.ParserRuleHandler import parser_rule
-from src.Utils.ErrorFormatter import ErrorFormatter
+from SParLex.Ast.ProgramAst import ProgramAst
+from SParLex.Ast.TokenAst import TokenAst
+from SParLex.Lexer.Tokens import TokenType, Token
+from SParLex.Parser.ParserError import ParserError
+from SParLex.Parser.ParserRuleHandler import parser_rule
+from SParLex.Utils.ErrorFormatter import ErrorFormatter
 
 
 class Parser(ABC):

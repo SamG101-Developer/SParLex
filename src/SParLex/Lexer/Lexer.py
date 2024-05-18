@@ -1,4 +1,4 @@
-from src.Lexer.Tokens import Token, TokenType
+from SParLex.Lexer.Tokens import Token, TokenType
 import re
 
 

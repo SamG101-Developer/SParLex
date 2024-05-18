@@ -1,7 +1,7 @@
 from colorama import Fore, Style
 from typing import List
 
-from src.Lexer.Tokens import Token, TokenType
+from SParLex.Lexer.Tokens import Token, TokenType
 
 
 class ErrorFormatter:
