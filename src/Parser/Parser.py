@@ -9,16 +9,6 @@ from src.Parser.ParserRuleHandler import parser_rule
 from src.Utils.ErrorFormatter import ErrorFormatter
 
 
-def tested_parser_rule(func):
-    func.__tested__ = True
-    return func
-
-
-def failed_parser_rule(func):
-    func.__tested__ = False
-    return func
-
-
 class Parser:
     _tokens: List[Token]
     _index: int
@@ -40,7 +30,6 @@ class Parser:
         return self._tokens[self._index]
 
     @parser_rule
-    @tested_parser_rule
     def parse_token(self, token_type: TokenType) -> TokenAst:
         if token_type == TokenType.NO_TOK:
             return TokenAst(self.current_pos(), Token("", TokenType.NO_TOK))
