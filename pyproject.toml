@@ -1,4 +1,6 @@
 [project]
+name = "SParLex"
+version = "1.0.0"
 dynamic = ["dependencies"]
 
 [tools.setuptools.dynamic]
