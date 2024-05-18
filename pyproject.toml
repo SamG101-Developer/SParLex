@@ -5,3 +5,6 @@ dynamic = ["dependencies"]
 
 [tools.setuptools.dynamic]
 dependencies = {file = "requirements.txt"}
+
+[options]
+packages = ["SParLex"]
