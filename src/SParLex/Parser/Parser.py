@@ -44,9 +44,25 @@ class Parser(ABC):
         # Return the current token.
         return self._tokens[self._index]
 
-    @abstractmethod
     def parse(self) -> ProgramAst:
-        # The entry point for the parser. This method should return the root AST node.
+        try:
+            return self.parse_root().parse_once()
+
+        except ParserError as e:
+            final_error = self._errors[0]
+
+            for current_error in self._errors:
+                if current_error.pos > final_error.pos:
+                    final_error = current_error
+
+            all_expected_tokens = "['" + "' | '".join(final_error.expected_tokens).replace("\n", "\\n") + "']"
+            error_message = str(final_error).replace("$", all_expected_tokens)
+            error_message = self._err_fmt.error(final_error.pos, message=error_message)
+            raise SystemExit(error_message) from None
+
+    @abstractmethod
+    @parser_rule
+    def parse_root(self) -> ProgramAst:
         ...
 
     @parser_rule
