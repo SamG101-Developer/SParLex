@@ -15,7 +15,7 @@ class Lexer:
     _code: str
     _token_class: type[TokenType]
 
-    def __init__(self, code: str, token_set: type[TokenType]) -> None:
+    def __init__(self, code: str, token_set: type[TokenType] = TokenType) -> None:
         self._code = code.replace("\t", "    ")
         self._token_class = token_set
 

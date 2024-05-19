@@ -3,7 +3,6 @@ from typing import Callable, List, Optional
 import functools
 
 from SParLex.Lexer.Tokens import TokenType
-from SParLex.Parser.Parser import Parser
 from SParLex.Parser.ParserError import ParserError
 from SParLex.Ast.Ast import Ast
 
