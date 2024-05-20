@@ -30,7 +30,7 @@ class ErrorFormatter:
     def error(self, start_pos: int, end_pos: int = -1, message: str = "", tag_message: str = "", minimal: bool = False, no_format: bool = False) -> str:
         if no_format:
             return message
-        while self._tokens[start_pos].token_type in [self._token_set.newline_token(), self._token_set.get_whitespace()]:
+        while self._tokens[start_pos].token_type in [self._token_set.newline_token(), self._token_set.whitespace_token()]:
             start_pos += 1
 
         # Get the tokens at the start and end of the line containing the error. Skip the leading newline.
