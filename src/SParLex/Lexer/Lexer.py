@@ -20,9 +20,7 @@ class Lexer:
     def __init__(self, code: str, token_set: type[Enum] = TokenType) -> None:
         self._code = code.replace("\t", "    ")
         self._token_class = token_set
-
-        if token_set is not TokenType:
-            self._token_class._member_map_.update(TokenType._member_map_)
+        self._token_class._member_map_.update(SpecialToken._member_map_)
 
     def lex(self):
         current = 0
