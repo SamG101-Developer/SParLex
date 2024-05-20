@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from enum import Enum
+from type_intersections import Intersection
 from typing import List
 
 from SParLex.Ast.ProgramAst import ProgramAst
@@ -24,15 +26,17 @@ class Parser(ABC):
     """
 
     _tokens: List[Token]
+    _token_set: Intersection[type[Enum], type[TokenType]]
     _index: int
     _err_fmt: ErrorFormatter
     _errors: List[ParserError]
     _pos_shift: int
 
-    def __init__(self, tokens: List[Token], file_name: str = "FILE", pos_shift: int = 0) -> None:
+    def __init__(self, tokens: List[Token], token_set: Intersection[type[Enum], type[TokenType]], file_name: str = "FILE", pos_shift: int = 0) -> None:
         self._tokens = tokens
+        self._token_set = token_set
         self._index = 0
-        self._err_fmt = ErrorFormatter(self._tokens, file_name)
+        self._err_fmt = ErrorFormatter(self._tokens, token_set, file_name)
         self._errors = []
         self._pos_shift = pos_shift
 

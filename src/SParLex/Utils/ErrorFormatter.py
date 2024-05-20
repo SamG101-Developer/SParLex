@@ -1,4 +1,6 @@
+from enum import Enum
 from colorama import Fore, Style
+from type_intersections import Intersection
 from typing import List
 
 from SParLex.Lexer.Tokens import Token, TokenType
@@ -6,9 +8,10 @@ from SParLex.Lexer.Tokens import Token, TokenType
 
 class ErrorFormatter:
     _tokens: List[Token]
+    _token_set: Intersection[type[Enum], type[TokenType]]
     _file_path: str
 
-    def __init__(self, tokens: List[Token], file_path: str) -> None:
+    def __init__(self, tokens: List[Token], token_set: Intersection[type[Enum], type[TokenType]], file_path: str) -> None:
         self._tokens = tokens
         self._file_path = file_path[file_path.rfind("src\\") + 4:]
 
@@ -26,17 +29,17 @@ class ErrorFormatter:
     def error(self, start_pos: int, end_pos: int = -1, message: str = "", tag_message: str = "", minimal: bool = False, no_format: bool = False) -> str:
         if no_format:
             return message
-        while self._tokens[start_pos].token_type in [TokenType.NEWLINE, TokenType.WHITE_SPACE]:
+        while self._tokens[start_pos].token_type in [self._token_set.get_newline(), self._token_set.get_whitespace()]:
             start_pos += 1
 
         # Get the tokens at the start and end of the line containing the error. Skip the leading newline.
-        error_line_start_pos = [i for i, x in enumerate(self._tokens[:start_pos]) if x.token_type == TokenType.NEWLINE][-1] + 1
-        error_line_end_pos = ([i for i, x in enumerate(self._tokens[start_pos:]) if x.token_type == TokenType.NEWLINE] or [len(self._tokens) - 1])[0] + start_pos
+        error_line_start_pos = [i for i, x in enumerate(self._tokens[:start_pos]) if x.token_type == self._token_set.get_newline()][-1] + 1
+        error_line_end_pos = ([i for i, x in enumerate(self._tokens[start_pos:]) if x.token_type == self._token_set.get_newline()] or [len(self._tokens) - 1])[0] + start_pos
         error_line_tokens = self._tokens[error_line_start_pos:error_line_end_pos]
         error_line_as_string = "".join([str(token) for token in error_line_tokens])
 
         # Get the line number of the error
-        error_line_number = len([x for x in self._tokens[:start_pos] if x.token_type == TokenType.NEWLINE])
+        error_line_number = len([x for x in self._tokens[:start_pos] if x.token_type == self._token_set.get_newline()])
 
         # The number of "^" is the length of the token data where the error is.
         if end_pos == -1:

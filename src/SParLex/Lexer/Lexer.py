@@ -17,7 +17,7 @@ class Lexer:
     _code: str
     _token_class: Intersection[type[Enum], type[TokenType]]
 
-    def __init__(self, code: str, token_set: type[Enum] = TokenType) -> None:
+    def __init__(self, code: str, token_set: Intersection[type[Enum], type[TokenType]] = TokenType) -> None:
         self._code = code.replace("\t", "    ")
         self._token_class = token_set
         self._token_class._member_map_.update(SpecialToken._member_map_)
