@@ -26,45 +26,45 @@ class Lexer:
         current = 0
         output = []
 
-        tokens   = [t for t in TokenType.__dict__["_member_names_"] if t.startswith("Tk")]
-        keywords = [t for t in TokenType.__dict__["_member_names_"] if t.startswith("Kw")]
-        lexemes  = [t for t in TokenType.__dict__["_member_names_"] if t.startswith("Lx")]
+        tokens   = [t for t in self._token_class.__dict__["_member_names_"] if t.startswith("Tk")]
+        keywords = [t for t in self._token_class.__dict__["_member_names_"] if t.startswith("Kw")]
+        lexemes  = [t for t in self._token_class.__dict__["_member_names_"] if t.startswith("Lx")]
 
-        tokens.sort(key=lambda t: len(TokenType[t].value), reverse=True)
-        keywords.sort(key=lambda t: len(TokenType[t].value), reverse=True)
+        tokens.sort(key=lambda t: len(self._token_class[t].value), reverse=True)
+        keywords.sort(key=lambda t: len(self._token_class[t].value), reverse=True)
 
         available_tokens = keywords + lexemes + tokens
 
         while current < len(self._code):
             for token in available_tokens:
-                value = getattr(TokenType, token).value
+                value = getattr(self._token_class, token).value
                 upper = current + len(value)
 
                 # Keywords: Match the keyword, and check that the next character isn't [A-Za-z_] (identifier).
                 if token.startswith("Kw") and self._code[current:upper] == value and not (self._code[upper].isalpha() or self._code[upper] == "_"):
-                    output.append(Token(value, TokenType[token]))
+                    output.append(Token(value, self._token_class[token]))
                     current += len(value)
                     break
 
                 # Lexemes: Match a lexeme by attempting to get a regex match against the current code. Discard comments.
                 elif token.startswith("Lx") and (matched := re.match(value, self._code[current:])):
-                    if TokenType[token] not in [self._token_class.single_line_comment_token(), self._token_class.multi_line_comment_token()]:
-                        output.append(Token(matched.group(0), TokenType[token]))
-                    if TokenType[token] == self._token_class.multi_line_comment_token():
-                        output.extend([Token("\n", TokenType.NEWLINE)] * matched.group(0).count("\n"))
+                    if self._token_class[token] not in [self._token_class.single_line_comment_token(), self._token_class.multi_line_comment_token()]:
+                        output.append(Token(matched.group(0), self._token_class[token]))
+                    if self._token_class[token] == self._token_class.multi_line_comment_token():
+                        output.extend([Token("\n", self._token_class.NEWLINE)] * matched.group(0).count("\n"))
                     current += len(matched.group(0))
                     break
 
                 # Tokens: Match the token and increment the counter by the length of the token.
                 elif token.startswith("Tk") and self._code[current:upper] == value:
-                    output.append(Token(value, TokenType[token]))
+                    output.append(Token(value, self._token_class[token]))
                     current += len(value)
                     break
 
             else:
                 # Use n error token here, so that the error checker can use the same code to format the error when some
                 # rule fails to parse, rather than trying to raise an error from here.
-                output += [Token(self._code[current], TokenType.ERR)]
+                output += [Token(self._code[current], self._token_class.ERR)]
                 current += 1
 
-        return [Token("\n", TokenType.NEWLINE)] + output + [Token("<EOF>", TokenType.EOF)]
+        return [Token("\n", self._token_class.NEWLINE)] + output + [Token("<EOF>", self._token_class.EOF)]
