@@ -70,7 +70,7 @@ class Parser(ABC):
         ...
 
     @parser_rule
-    def parse_token(self, token_type: TokenType) -> TokenAst:
+    def parse_token(self, token_type: Intersection[Enum, TokenType]) -> TokenAst:
         if token_type == SpecialToken.NO_TOK:
             return TokenAst(self.current_pos(), Token("", SpecialToken.NO_TOK))
 
@@ -81,9 +81,9 @@ class Parser(ABC):
 
         c1 = self.current_pos()
 
-        while token_type != TokenType.newline_token() and self.current_tok().token_type in [TokenType.newline_token(), TokenType.whitespace_token()]:
+        while token_type != self._token_set.newline_token() and self.current_tok().token_type in [self._token_set.newline_token(), self._token_set.whitespace_token()]:
             self._index += 1
-        while token_type == TokenType.newline_token() and self.current_tok().token_type == TokenType.whitespace_token():
+        while token_type == self._token_set.newline_token() and self.current_tok().token_type == self._token_set.whitespace_token():
             self._index += 1
 
         if self.current_tok().token_type != token_type:
