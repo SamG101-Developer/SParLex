@@ -3,7 +3,7 @@ from typing import List
 
 from SParLex.Ast.ProgramAst import ProgramAst
 from SParLex.Ast.TokenAst import TokenAst
-from SParLex.Lexer.Tokens import TokenType, Token
+from SParLex.Lexer.Tokens import TokenType, Token, SpecialToken
 from SParLex.Parser.ParserError import ParserError
 from SParLex.Parser.ParserRuleHandler import parser_rule
 from SParLex.Utils.ErrorFormatter import ErrorFormatter
@@ -67,8 +67,8 @@ class Parser(ABC):
 
     @parser_rule
     def parse_token(self, token_type: TokenType) -> TokenAst:
-        if token_type == TokenType.NO_TOK:
-            return TokenAst(self.current_pos(), Token("", TokenType.NO_TOK))
+        if token_type == SpecialToken.NO_TOK:
+            return TokenAst(self.current_pos(), Token("", SpecialToken.NO_TOK))
 
         if self._index > len(self._tokens) - 1:
             new_error = ParserError(self.current_pos(), f"Expected '{token_type}', got <EOF>")
