@@ -13,6 +13,7 @@ class ErrorFormatter:
 
     def __init__(self, tokens: List[Token], token_set: Intersection[type[Enum], type[TokenType]], file_path: str) -> None:
         self._tokens = tokens
+        self._token_set = token_set
         self._file_path = file_path[file_path.rfind("src\\") + 4:]
 
     # def error_ast(self, ast, **kwargs) -> str:
