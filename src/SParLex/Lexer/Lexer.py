@@ -51,7 +51,7 @@ class Lexer:
                     if self._token_class[token] not in [self._token_class.single_line_comment_token(), self._token_class.multi_line_comment_token()]:
                         output.append(Token(matched.group(0), self._token_class[token]))
                     if self._token_class[token] == self._token_class.multi_line_comment_token():
-                        output.extend([Token("\n", self._token_class.NEWLINE)] * matched.group(0).count("\n"))
+                        output.extend([Token("\n", TokenType.NEWLINE)] * matched.group(0).count("\n"))
                     current += len(matched.group(0))
                     break
 
@@ -64,7 +64,7 @@ class Lexer:
             else:
                 # Use n error token here, so that the error checker can use the same code to format the error when some
                 # rule fails to parse, rather than trying to raise an error from here.
-                output += [Token(self._code[current], self._token_class.ERR)]
+                output += [Token(self._code[current], TokenType.ERR)]
                 current += 1
 
-        return [Token("\n", self._token_class.NEWLINE)] + output + [Token("<EOF>", self._token_class.EOF)]
+        return [Token("\n", TokenType.NEWLINE)] + output + [Token("<EOF>", TokenType.EOF)]
