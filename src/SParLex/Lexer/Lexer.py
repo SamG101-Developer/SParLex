@@ -1,4 +1,6 @@
-from SParLex.Lexer.Tokens import Token, TokenType
+from SParLex.Lexer.Tokens import Token, TokenType, SpecialToken
+from enum import Enum
+from type_intersections import Intersection
 import re
 
 
@@ -13,9 +15,9 @@ class Lexer:
     """
 
     _code: str
-    _token_class: type[TokenType]
+    _token_class: Intersection[type[Enum], type[TokenType]]
 
-    def __init__(self, code: str, token_set: type[TokenType] = TokenType) -> None:
+    def __init__(self, code: str, token_set: type[Enum] = TokenType) -> None:
         self._code = code.replace("\t", "    ")
         self._token_class = token_set
 
@@ -51,7 +53,7 @@ class Lexer:
                     if self._token_class[token] not in [self._token_class.single_line_comment_token(), self._token_class.multi_line_comment_token()]:
                         output.append(Token(matched.group(0), self._token_class[token]))
                     if self._token_class[token] == self._token_class.multi_line_comment_token():
-                        output.extend([Token("\n", TokenType.NEWLINE)] * matched.group(0).count("\n"))
+                        output.extend([Token("\n", TokenType.newline_token())] * matched.group(0).count("\n"))
                     current += len(matched.group(0))
                     break
 
@@ -64,7 +66,7 @@ class Lexer:
             else:
                 # Use n error token here, so that the error checker can use the same code to format the error when some
                 # rule fails to parse, rather than trying to raise an error from here.
-                output += [Token(self._code[current], TokenType.ERR)]
+                output += [Token(self._code[current], SpecialToken.ERR)]
                 current += 1
 
-        return [Token("\n", TokenType.NEWLINE)] + output + [Token("<EOF>", TokenType.EOF)]
+        return [Token("\n", TokenType.newline_token())] + output + [Token("<EOF>", SpecialToken.EOF)]

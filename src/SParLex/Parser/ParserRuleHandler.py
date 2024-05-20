@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Callable, List, Optional
 import functools
 
-from SParLex.Lexer.Tokens import TokenType
+from SParLex.Lexer.Tokens import SpecialToken
 from SParLex.Parser.ParserError import ParserError
 from SParLex.Ast.Ast import Ast
 
@@ -45,7 +45,7 @@ class ParserRuleHandler[T]:
             self._parser._index = parser_index
             return None
 
-    def parse_zero_or_more(self, sep: TokenType = TokenType.NO_TOK) -> List[T]:
+    def parse_zero_or_more(self, sep: SpecialToken = SpecialToken.NO_TOK) -> List[T]:
         self._result = []
         while ast := self.parse_optional(save=False):
             self._result.append(ast)
@@ -53,7 +53,7 @@ class ParserRuleHandler[T]:
             if not sep_ast: break
         return self._result
 
-    def parse_one_or_more(self, sep: TokenType = TokenType.NO_TOK) -> List[T]:
+    def parse_one_or_more(self, sep: SpecialToken = SpecialToken.NO_TOK) -> List[T]:
         self.parse_zero_or_more(sep)
         if not self._result:
             new_error = ParserError(f"Expected one or more.")
