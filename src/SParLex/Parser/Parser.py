@@ -42,7 +42,7 @@ class Parser(ABC):
         self._errors = []
         self._pos_shift = pos_shift
         self._auto_new_line = True
-        self._auto_skip = [self._token_set.newline_token(), self._token_set.whitespace_token()] if self._auto_new_line else [self._token_set.whitespace_token()]
+        self._auto_skip = [self._token_set.newline_token(), self._token_set.whitespace_token()] if not self._auto_new_line else [self._token_set.whitespace_token()]
 
     def current_pos(self) -> int:
         # Return the current position in the code.
