@@ -51,7 +51,7 @@ class Lexer:
                     if self._token_class[token] not in [self._token_class.single_line_comment_token(), self._token_class.multi_line_comment_token()]:
                         output.append(Token(matched.group(0), self._token_class[token]))
                     if self._token_class[token] == self._token_class.multi_line_comment_token():
-                        output.extend([Token("\n", TokenType.newline_token())] * matched.group(0).count("\n"))
+                        output.extend([Token("\n", self._token_class.newline_token())] * matched.group(0).count("\n"))
                     current += len(matched.group(0))
                     break
 
@@ -67,4 +67,4 @@ class Lexer:
                 output += [Token(self._code[current], SpecialToken.ERR)]
                 current += 1
 
-        return [Token("\n", TokenType.newline_token())] + output + [Token("<EOF>", SpecialToken.EOF)]
+        return [Token("\n", self._token_class.newline_token())] + output + [Token("<EOF>", SpecialToken.EOF)]
