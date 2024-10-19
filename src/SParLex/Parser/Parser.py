@@ -69,6 +69,17 @@ class Parser(ABC):
     def parse_root(self) -> ProgramAst:
         ...
 
+    def parse_not(self, token: Intersection[Enum, TokenType] | SpecialToken) -> None:
+        parser_index = self._index
+        try:
+            self.parse_token(token)
+            new_error = ParserError(f"Expected not '{token}'.")
+            new_error.pos = parser_index
+            self._errors.append(new_error)
+            raise new_error
+        except ParserError:
+            self._index = parser_index
+
     @parser_rule
     def parse_token(self, token_type: Intersection[Enum, TokenType]) -> TokenAst:
         if token_type == SpecialToken.NO_TOK:

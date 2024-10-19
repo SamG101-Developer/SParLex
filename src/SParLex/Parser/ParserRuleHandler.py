@@ -64,17 +64,6 @@ class ParserRuleHandler[T]:
             raise new_error
         return self._result
 
-    def parse_not(self, token: Intersection[Enum, TokenType] | SpecialToken) -> None:
-        parser_index = self._parser._index
-        try:
-            self._parser.parse_token(token)
-            new_error = ParserError(f"Expected not '{token}'.")
-            new_error.pos = parser_index
-            self._parser._errors.append(new_error)
-            raise new_error
-        except ParserError:
-            self._parser._index = parser_index
-
     def for_alt(self) -> ParserRuleHandler:
         self._for_alternate = True
         return self
