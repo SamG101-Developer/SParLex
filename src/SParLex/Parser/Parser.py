@@ -96,7 +96,7 @@ class Parser(ABC):
 
         c1 = self.current_pos()
 
-        while token_type != self._token_set.newline_token() and self.current_tok().token_type in self._auto_skip:
+        while self._auto_skip and token_type != self._token_set.newline_token() and self.current_tok().token_type in self._auto_skip:
             self._index += 1
         while token_type == self._token_set.newline_token() and self.current_tok().token_type == self._token_set.whitespace_token():
             self._index += 1
