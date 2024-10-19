@@ -31,6 +31,7 @@ class Parser(ABC):
     _err_fmt: ErrorFormatter
     _errors: List[ParserError]
     _pos_shift: int
+    _auto_new_line: bool
 
     def __init__(self, tokens: List[Token], token_set: Intersection[type[Enum], type[TokenType]], file_name: str = "FILE", pos_shift: int = 0) -> None:
         self._tokens = tokens
@@ -39,6 +40,7 @@ class Parser(ABC):
         self._err_fmt = ErrorFormatter(self._tokens, token_set, file_name)
         self._errors = []
         self._pos_shift = pos_shift
+        self._auto_new_line = True
 
     def current_pos(self) -> int:
         # Return the current position in the code.
@@ -92,7 +94,7 @@ class Parser(ABC):
 
         c1 = self.current_pos()
 
-        while token_type != self._token_set.newline_token() and self.current_tok().token_type in [self._token_set.newline_token(), self._token_set.whitespace_token()]:
+        while self._auto_new_line and token_type != self._token_set.newline_token() and self.current_tok().token_type in [self._token_set.newline_token(), self._token_set.whitespace_token()]:
             self._index += 1
         while token_type == self._token_set.newline_token() and self.current_tok().token_type == self._token_set.whitespace_token():
             self._index += 1
