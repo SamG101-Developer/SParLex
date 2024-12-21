@@ -1,121 +1,122 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
-from enum import Enum
-from type_intersections import Intersection
-from typing import List
+from typing import Callable, List, Optional, TYPE_CHECKING
+import functools
 
-from SParLex.Ast.ProgramAst import ProgramAst
-from SParLex.Ast.TokenAst import TokenAst
-from SParLex.Lexer.Tokens import TokenType, Token, SpecialToken
-from SParLex.Parser.ParserError import ParserError
-from SParLex.Parser.ParserRuleHandler import parser_rule
-from SParLex.Utils.ErrorFormatter import ErrorFormatter
+from SParLex.Lexer.Tokens import Token, TokenType, SpecialToken
+from SParLex.Parser.ParserRuleHandler import ParserRuleHandler
+from SParLex.Ast import *
+
+if TYPE_CHECKING:
+    from SParLex.Parser.ParserError import ParserError, ParserErrors
+    from SParLex.Utils.ErrorFormatter import ErrorFormatter
+
+
+# Decorator that wraps the function in a ParserRuleHandler
+def parser_rule[T](func: Callable[..., T]) -> Callable[..., ParserRuleHandler]:
+    @functools.wraps(func)
+    def wrapper(self, *args) -> ParserRuleHandler[T]:
+        return ParserRuleHandler(self, functools.partial(func, self, *args))
+    return wrapper
 
 
 class Parser(ABC):
-    """
-    The Parser class is an abstract class that defines the interface for all the rules. Each rule is a method that
-    returns an AST node. The rules are called by the "parse" method, which is the entry point for the parser. Each rule
-    defined must be decorated with the "@parse_rule" decorator (see "parse_token").
-
-    The parser keeps track of the current token index and the list of tokens. It also keeps track of the errors that
-    occurred during the parsing process. The "parse_token" method is used to parse a single token, and it checks if the
-    token is the expected token. If the token is not the expected token, an error is raised.
-
-    When inheriting from the Parser class, the "parse" method must be implemented. The "parse" method is the entry point
-    for the parser and should return the root AST node - a "ProgramAst" type.
-    """
-
     _tokens: List[Token]
-    _token_set: Intersection[type[Enum], type[TokenType]]
+    _name: str
     _index: int
     _err_fmt: ErrorFormatter
-    _errors: List[ParserError]
-    _pos_shift: int
-    _auto_new_line: bool
-    _auto_skip: List
+    _error: Optional[ParserErrors.SyntaxError]
 
-    def __init__(self, tokens: List[Token], token_set: Intersection[type[Enum], type[TokenType]], file_name: str = "FILE", pos_shift: int = 0) -> None:
+    def __init__(self, tokens: List[Token], file_name: str = "", error_formatter: Optional[ErrorFormatter] = None) -> None:
+        from SParLex.Parser.ParserError import ParserErrors
+        from SParLex.Utils.ErrorFormatter import ErrorFormatter
+
         self._tokens = tokens
-        self._token_set = token_set
+        self._name = file_name
         self._index = 0
-        self._err_fmt = ErrorFormatter(self._tokens, token_set, file_name)
-        self._errors = []
-        self._pos_shift = pos_shift
-        self._auto_new_line = True
-        self._auto_skip = [self._token_set.newline_token(), self._token_set.whitespace_token()] if not self._auto_new_line else [self._token_set.whitespace_token()]
+        self._err_fmt = error_formatter or ErrorFormatter(self._tokens, file_name)
+        self._error = ParserErrors.SyntaxError()
 
     def current_pos(self) -> int:
-        # Return the current position in the code.
-        return self._index + self._pos_shift
+        return self._index
 
     def current_tok(self) -> Token:
-        # Return the current token.
         return self._tokens[self._index]
 
+    # ===== PARSING =====
+
     def parse(self) -> ProgramAst:
+        from SParLex.Parser.ParserError import ParserError
+
         try:
-            return self.parse_root().parse_once()
+            p1 = self.parse_root().parse_once()
+            p2 = self.parse_eof().parse_once()
+            return ProgramAst(p1, p2)
 
         except ParserError as e:
-            final_error = self._errors[0]
+            e.throw(self._err_fmt)
 
-            for current_error in self._errors:
-                if current_error.pos > final_error.pos:
-                    final_error = current_error
-
-            all_expected_tokens = "['" + "' | '".join(final_error.expected_tokens).replace("\n", "\\n") + "']"
-            error_message = str(final_error).replace("$", all_expected_tokens)
-            error_message = self._err_fmt.error(final_error.pos, message=error_message)
-            raise SystemExit(error_message) from None
-
-    @abstractmethod
     @parser_rule
-    def parse_root(self) -> ProgramAst:
+    @abstractmethod
+    def parse_root(self) -> Ast:
         ...
 
-    def parse_not(self, token: Intersection[Enum, TokenType] | SpecialToken) -> None:
-        parser_index = self._index
-        try:
-            self.parse_token(token)
-            new_error = ParserError(f"Expected not '{token}'.")
-            new_error.pos = parser_index
-            self._errors.append(new_error)
-            raise new_error
-        except ParserError:
-            self._index = parser_index
+    @parser_rule
+    def parse_eof(self) -> TokenAst:
+        p1 = self.parse_token(SpecialToken.EOF).parse_once()
+        return p1
+
+    # ===== TOKENS, KEYWORDS, & LEXEMES =====
 
     @parser_rule
-    def parse_token(self, token_type: Intersection[Enum, TokenType]) -> TokenAst:
+    def parse_lexeme(self, lexeme: TokenType) -> TokenAst:
+        compiled_lexeme = TokenType[f"Cm{lexeme.name}"]
+        p1 = self.parse_token(compiled_lexeme).parse_once()
+        return p1
+
+    @parser_rule
+    def parse_token(self, token_type: TokenType) -> TokenAst:
+        # For the "no token", instantly return a new token.
         if token_type == SpecialToken.NO_TOK:
             return TokenAst(self.current_pos(), Token("", SpecialToken.NO_TOK))
 
+        # Check if the end of the file has been reached.
         if self._index > len(self._tokens) - 1:
-            new_error = ParserError(self.current_pos(), f"Expected '{token_type}', got <EOF>")
-            self._errors.append(new_error)
+            new_error = f"Expected '{token_type}', got <EOF>"
+            self.store_error(self.current_pos(), new_error)
             raise new_error
 
-        c1 = self.current_pos()
+        # Skip newlines and whitespace for non-newline parsing, and whitespace only for new-line parsing.
+        if token_type != TokenType.newline_token():
+            while self._tokens[self._index].token_type == TokenType.newline_token() or self._tokens[self._index].token_type == TokenType.whitespace_token():
+                self._index += 1
+        if token_type == TokenType.newline_token():
+            while self._tokens[self._index].token_type == TokenType.whitespace_token():
+                self._index += 1
 
-        while token_type != self._token_set.newline_token() and self.current_tok().token_type in self._auto_skip:
-            self._index += 1
-        while token_type == self._token_set.newline_token() and self.current_tok().token_type == self._token_set.whitespace_token():
-            self._index += 1
+        # Handle an incorrectly placed token.
+        if self._tokens[self._index].token_type != token_type:
+            if self._error.pos == self._index:
+                self._error.expected_tokens.append(token_type)
+                raise self._error
 
-        if self.current_tok().token_type != token_type:
-            token_print = lambda t: f"<{t.name[2:]}>" if t.name.startswith("Lx") else t.value
+            new_error = f"Expected $, got '{self._tokens[self._index].token_type.name}'"
+            if self.store_error(self._index, new_error):
+                self._error.expected_tokens.append(token_type)
+            raise self._error
 
-            if any([error.pos == self.current_pos() for error in self._errors]):
-                existing_error = next(error for error in self._errors if error.pos == self.current_pos())
-                existing_error.expected_tokens.add(token_print(token_type))
-                raise existing_error
-
-            else:
-                new_error = ParserError(f"Expected $, got '{token_print(self.current_tok().token_type)}'")
-                new_error.pos = self.current_pos()
-                new_error.expected_tokens.add(token_print(token_type))
-                self._errors.append(new_error)
-                raise new_error
-
-        r = TokenAst(c1, self.current_tok())
+        # Otherwise, the parse was successful, so return a TokenAst as the correct position.
+        r = TokenAst(self._index, self._tokens[self._index])
         self._index += 1
         return r
+
+    def store_error(self, pos: int, error: str) -> bool:
+        if pos > self._error.pos:
+            self._error.expected_tokens.clear()
+            self._error.pos = pos
+            self._error.args = (error,)
+            return True
+        return False
+
+
+__all__ = ["Parser", "parser_rule"]

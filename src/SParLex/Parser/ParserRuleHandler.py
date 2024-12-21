@@ -1,132 +1,87 @@
 from __future__ import annotations
-from enum import Enum
-from type_intersections import Intersection
-from typing import Callable, List, Optional
-import functools
+from typing import Callable, Final, List, Optional, Tuple, TYPE_CHECKING
 
-from SParLex.Lexer.Tokens import SpecialToken, TokenType
-from SParLex.Parser.ParserError import ParserError
-from SParLex.Ast.Ast import Ast
+if TYPE_CHECKING:
+    from SParLex.Lexer.Tokens import TokenType
+    from SParLex.Parser.Parser import Parser
+    from SParLex.Parser.ParserAlternateRulesHandler import ParserAlternateRulesHandler
+    from SParLex.Parser.ParserError import ParserError
 
 
 class ParserRuleHandler[T]:
-    """
-    The ParserRuleHandler class is used to handle the parsing of a rule. It is used to parse a rule once, zero or once,
-    zero or more times, or one or more times. The result of the parsing is stored in the "_result" attribute. The
-    "_rule" attribute is a function that returns the AST node.
+    type ParserRule = Callable[[], T]
+    __slots__ = ["_rule", "_parser"]
 
-    This class also implements the "__or__" operator, allowing for a alternate rule to be defined. The "__or__" operator
-    is used to create a ParserAlternateRulesHandler object, which is used to parse one of the alternate rules. For a
-    rule to be combined into an alternate rule, the "for_alt" method must be called on the rule, to prevent bugs.
-    """
-
-    ParserRule = Callable[[], T]
-
-    _rule: ParserRule
-    _parser: Parser
-    _for_alternate: bool
-    _result: Optional[T]
+    _rule: Final[ParserRule]
+    _parser: Final[Parser]
 
     def __init__(self, parser: Parser, rule: ParserRule) -> None:
         self._parser = parser
         self._rule = rule
-        self._for_alternate = False
-        self._result = None
 
     def parse_once(self) -> T:
-        self._result = self._rule()
-        return self._result
+        ast = self._rule()
+        return ast
 
-    def parse_optional(self, save=True) -> Optional[T]:
+    def parse_optional(self) -> Optional[T]:
+        from SParLex.Parser.ParserError import ParserError
+
         parser_index = self._parser._index
         try:
             ast = self._rule()
-            if save: self._result = ast
             return ast
         except ParserError:
             self._parser._index = parser_index
             return None
 
-    def parse_zero_or_more(self, sep: Intersection[Enum, TokenType] | SpecialToken = SpecialToken.NO_TOK) -> List[T]:
-        self._result = []
-        while ast := self.parse_optional(save=False):
-            self._result.append(ast)
-            sep_ast = self._parser.parse_token(sep).parse_optional()
-            if not sep_ast: break
-        return self._result
+    def parse_zero_or_more(self, separator: TokenType, *, propagate_error: bool = False) -> List[T] | Tuple[List[T], ParserError]:
+        from SParLex.Lexer.Tokens import SpecialToken
+        from SParLex.Parser.ParserError import ParserError
 
-    def parse_one_or_more(self, sep: Intersection[Enum, TokenType] | SpecialToken = SpecialToken.NO_TOK) -> List[T]:
-        self.parse_zero_or_more(sep)
-        if not self._result:
-            new_error = ParserError(f"Expected one or more.")
-            new_error.pos = self._parser._index
-            self._parser._errors.append(new_error)
-            raise new_error
-        return self._result
-
-    def for_alt(self) -> ParserRuleHandler:
-        self._for_alternate = True
-        return self
-
-    def and_then(self, wrapper_function) -> ParserRuleHandler:
-        new_parser_rule_handler = ParserRuleHandler(self._parser, self._rule)
-        new_parser_rule_handler._rule = lambda: wrapper_function(self._rule())
-        return new_parser_rule_handler
-
-    def __or__(self, that: ParserRuleHandler) -> ParserAlternateRulesHandler:
-        if not (self._for_alternate and that._for_alternate):
-            raise SystemExit("Cannot use '|' operator on a non-alternate rule.")
-
-        return (ParserAlternateRulesHandler(self._parser).for_alt()
-                .add_parser_rule_handler(self)
-                .add_parser_rule_handler(that))
-
-
-class ParserAlternateRulesHandler(ParserRuleHandler):
-    """
-    The ParserAlternateRulesHandler class is used to handle the parsing of alternate rules. It is used to parse one of
-    the alternate rules. The "_parser_rule_handlers" attribute is a list of ParserRuleHandler objects that represent the
-    alternate rules.
-    """
-
-    _parser_rule_handlers: List[ParserRuleHandler]
-
-    def __init__(self, parser: Parser) -> None:
-        super().__init__(parser, None)
-        self._parser_rule_handlers = []
-
-    def add_parser_rule_handler(self, parser_rule_handler: ParserRuleHandler) -> ParserAlternateRulesHandler:
-        self._parser_rule_handlers.append(parser_rule_handler)
-        return self
-
-    def parse_once(self) -> Ast:
-        for parser_rule_handler in self._parser_rule_handlers:
-            parser_index = self._parser._index
+        successful_parses, result = 0, []
+        parsed_sep, error = False, None
+        while True:
             try:
-                self._result = parser_rule_handler.parse_once()
-                return self._result
-            except ParserError:
-                self._parser._index = parser_index
-                continue
-        raise ParserError(self._parser._index, "Expected one of the alternatives.")
+                # If this is the second pass, then require the separator to be parsed.
+                if successful_parses > 0:
+                    self._parser.parse_token(separator).parse_once()
+                    parsed_sep = True
 
-    def __or__(self, that) -> ParserAlternateRulesHandler:
-        if not (self._for_alternate and that._for_alternate):
-            raise SystemExit("Cannot use '|' operator on a non-alternate rule.")
+                # Try to parse the AST, and mark the most recent parse as non-separator.
+                ast = self.parse_once()
+                parsed_sep = False
 
-        return self.add_parser_rule_handler(that)
+                # Save the AST to the result list and increment the number of ASTs parsed.
+                result.append(ast)
+                successful_parses += 1
+
+            except ParserError as e:
+                # If the most recent parse is a separator, backtrack it because there is no following AST.
+                if parsed_sep:
+                    self._parser._index -= 1 * (separator != SpecialToken.NO_TOK)
+
+                # Save the error and break the loop.
+                error = e
+                break
+
+        # Return the result, and the with the error if it is to be propagated.
+        return result if not propagate_error else (result, error)
+
+    def parse_one_or_more(self, separator: TokenType) -> List[T]:
+        result = self.parse_zero_or_more(separator, propagate_error=True)
+        if result[0].length < 1:
+            raise result[1]
+        return result[0]
+
+    def parse_two_or_more(self, separator: TokenType) -> List[T]:
+        result = self.parse_zero_or_more(separator, propagate_error=True)
+        if result[0].length < 2:
+            raise result[1]
+        return result[0]
+
+    def __or__[U](self, that: ParserRuleHandler[U]) -> ParserAlternateRulesHandler[T | U]:
+        from SParLex.Parser.ParserAlternateRulesHandler import ParserAlternateRulesHandler
+        return ParserAlternateRulesHandler(self._parser).add_parser_rule_handler(self).add_parser_rule_handler(that)
 
 
-# Decorator that wraps the function in a ParserRuleHandler
-def parser_rule(func) -> Callable[..., ParserRuleHandler]:
-    """
-    Decorator that wraps the function in a ParserRuleHandler.
-    :param func: The function to wrap.
-    :return: The wrapped function.
-    """
-
-    @functools.wraps(func)
-    def wrapper(self, *args) -> ParserRuleHandler:
-        return ParserRuleHandler(self, functools.partial(func, self, *args))
-
-    return wrapper
+__all__ = ["ParserRuleHandler"]

@@ -1,18 +1,38 @@
+from __future__ import annotations
 from ordered_set import OrderedSet
+from typing import List, NoReturn
+
+from SParLex.Lexer.Tokens import TokenType
+from SParLex.Utils.ErrorFormatter import ErrorFormatter
 
 
 class ParserError(Exception):
-    """
-    The ParserError class is an exception that is raised when the parser encounters an error. It contains the position
-    of the error and the expected tokens at that position. The expected tokens are stored in an OrderedSet, which is a
-    set that maintains the order of insertion. The expected tokens are used by the error formatter to display the error
-    message.
-    """
-
-    pos: int
-    expected_tokens: OrderedSet[str]
-
     def __init__(self, *args) -> None:
         super().__init__(*args)
-        self.pos = -1
-        self.expected_tokens = OrderedSet()
+
+    def throw(self, error_formatter: ErrorFormatter) -> NoReturn:
+        ...
+
+
+class ParserErrors:
+
+    class SyntaxError(ParserError):
+        pos: int
+        expected_tokens: List[TokenType]
+
+        def __init__(self, *args) -> None:
+            super().__init__(*args)
+            self.pos = -1
+            self.expected_tokens = []
+
+        def throw(self, error_formatter: ErrorFormatter) -> NoReturn:
+            # Convert the list of expected tokens into a set of strings.
+            all_expected_tokens = OrderedSet([t.print() for t in self.expected_tokens])
+            all_expected_tokens = "{'" + "' | '".join(all_expected_tokens).replace("\n", "\\n") + "'}"
+
+            # Replace the "$" token with the set of expected tokens.
+            error_message = str(self).replace("$", all_expected_tokens)
+            error_message = error_formatter.error(self.pos, message=error_message, tag_message="Syntax Error")
+
+            # Raise the error.
+            raise ParserError(error_message) from None
