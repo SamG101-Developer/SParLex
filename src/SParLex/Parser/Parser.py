@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Callable, List, Optional, TYPE_CHECKING
+from typing import Callable, List, Optional, Type, TYPE_CHECKING
 import functools
 
 from SParLex.Lexer.Tokens import Token, TokenType, SpecialToken
@@ -22,15 +22,17 @@ def parser_rule[T](func: Callable[..., T]) -> Callable[..., ParserRuleHandler]:
 
 class Parser(ABC):
     _tokens: List[Token]
+    _token_set: Type[TokenType]
     _name: str
     _index: int
     _err_fmt: ErrorFormatter
     _error: Optional[ParserErrors.SyntaxError]
 
-    def __init__(self, tokens: List[Token], file_name: str = "", error_formatter: Optional[ErrorFormatter] = None) -> None:
+    def __init__(self, token_set: Type[TokenType], tokens: List[Token], file_name: str = "", error_formatter: Optional[ErrorFormatter] = None) -> None:
         from SParLex.Parser.ParserError import ParserErrors
         from SParLex.Utils.ErrorFormatter import ErrorFormatter
 
+        self._token_set = token_set
         self._tokens = tokens
         self._name = file_name
         self._index = 0
@@ -70,7 +72,7 @@ class Parser(ABC):
 
     @parser_rule
     def parse_lexeme(self, lexeme: TokenType) -> TokenAst:
-        compiled_lexeme = TokenType[f"Cm{lexeme.name}"]
+        compiled_lexeme = self._token_set[f"Cm{lexeme.name}"]
         p1 = self.parse_token(compiled_lexeme).parse_once()
         return p1
 
@@ -87,11 +89,11 @@ class Parser(ABC):
             raise new_error
 
         # Skip newlines and whitespace for non-newline parsing, and whitespace only for new-line parsing.
-        if token_type != TokenType.newline_token():
-            while self._tokens[self._index].token_type == TokenType.newline_token() or self._tokens[self._index].token_type == TokenType.whitespace_token():
+        if token_type != self._token_set.newline_token():
+            while self._tokens[self._index].token_type == self._token_set.newline_token() or self._tokens[self._index].token_type == self._token_set.whitespace_token():
                 self._index += 1
-        if token_type == TokenType.newline_token():
-            while self._tokens[self._index].token_type == TokenType.whitespace_token():
+        if token_type == self._token_set.newline_token():
+            while self._tokens[self._index].token_type == self._token_set.whitespace_token():
                 self._index += 1
 
         # Handle an incorrectly placed token.
