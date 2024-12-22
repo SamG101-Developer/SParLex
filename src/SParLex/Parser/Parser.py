@@ -36,7 +36,7 @@ class Parser(ABC):
         self._tokens = tokens
         self._name = file_name
         self._index = 0
-        self._err_fmt = error_formatter or ErrorFormatter(self._tokens, file_name)
+        self._err_fmt = error_formatter or ErrorFormatter(token_set, self._tokens, file_name)
         self._error = ParserErrors.SyntaxError()
 
     def current_pos(self) -> int:
