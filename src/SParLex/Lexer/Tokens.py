@@ -9,6 +9,12 @@ class SpecialToken(Enum):
     NO_TOK = ""
     EOF = "<EOF>"
 
+    def print(self) -> str:
+        return self.value
+
+    def __json__(self) -> str:
+        return self.value
+
 
 class TokenType(Enum):
     """
