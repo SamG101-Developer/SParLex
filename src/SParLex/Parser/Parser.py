@@ -51,9 +51,10 @@ class Parser(ABC):
         from SParLex.Parser.ParserError import ParserError
 
         try:
+            c0 = self.current_pos()
             p1 = self.parse_root().parse_once()
             p2 = self.parse_eof().parse_once()
-            return ProgramAst(p1, p2)
+            return ProgramAst(c0, p1, p2)
 
         except ParserError as e:
             e.throw(self._err_fmt)
