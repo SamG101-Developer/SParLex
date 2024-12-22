@@ -1,29 +1,31 @@
-from typing import List
+from typing import List, Type
 from colorama import Fore, Style
 
-from SParLex.Lexer.Tokens import Token, TokenType, SpecialToken
+from SParLex.Lexer.Tokens import Token, TokenType
 
 
 class ErrorFormatter:
+    _token_set: Type[TokenType]
     _tokens: List[Token]
     _file_path: str
 
-    def __init__(self, tokens: List[Token], file_path: str) -> None:
+    def __init__(self, token_set: Type[TokenType], tokens: List[Token], file_path: str) -> None:
+        self._token_set = token_set
         self._tokens = tokens
         self._file_path = file_path[file_path.rfind("src\\") + 4:]
 
     def error(self, start_pos: int, message: str = "", tag_message: str = "", minimal: bool = False) -> str:
-        while self._tokens[start_pos].token_type in [TokenType.newline_token(), TokenType.whitespace_token()]:
+        while self._tokens[start_pos].token_type in [self._token_set.newline_token(), self._token_set.whitespace_token()]:
             start_pos += 1
 
         # Get the tokens at the start and end of the line containing the error. Skip the leading newline.
-        error_line_start_pos = [i for i, x in enumerate(self._tokens[:start_pos]) if x.token_type == TokenType.newline_token()][-1] + 1
-        error_line_end_pos = ([i for i, x in enumerate(self._tokens[start_pos:]) if x.token_type == TokenType.newline_token()] or [len(self._tokens) - 1])[0] + start_pos
+        error_line_start_pos = [i for i, x in enumerate(self._tokens[:start_pos]) if x.token_type == self._token_set.newline_token()][-1] + 1
+        error_line_end_pos = ([i for i, x in enumerate(self._tokens[start_pos:]) if x.token_type == self._token_set.newline_token()] or [len(self._tokens) - 1])[0] + start_pos
         error_line_tokens = self._tokens[error_line_start_pos:error_line_end_pos]
         error_line_as_string = "".join([str(token) for token in error_line_tokens])
 
         # Get the line number of the error
-        error_line_number = len([x for x in self._tokens[:start_pos] if x.token_type == TokenType.newline_token()])
+        error_line_number = len([x for x in self._tokens[:start_pos] if x.token_type == self._token_set.newline_token()])
 
         # The number of "^" is the length of the token data where the error is. Todo: Should span entire AST node.
         carets = "^" * len(self._tokens[start_pos].token_metadata)
