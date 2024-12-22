@@ -49,6 +49,12 @@ class TokenType(Enum):
     def whitespace_token() -> SpecialToken:
         return SpecialToken.ERR
 
+    def print(self) -> str:
+        return f"<{self.name[2:]}>" if self.name[:2] == "Cm" else self.value
+
+    def __json__(self) -> str:
+        return self.value
+
 
 @dataclass
 class Token[T: Enum]:
