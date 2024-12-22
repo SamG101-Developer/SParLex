@@ -69,13 +69,13 @@ class ParserRuleHandler[T]:
 
     def parse_one_or_more(self, separator: TokenType) -> List[T]:
         result = self.parse_zero_or_more(separator, propagate_error=True)
-        if result[0].length < 1:
+        if len(result[0]) < 1:
             raise result[1]
         return result[0]
 
     def parse_two_or_more(self, separator: TokenType) -> List[T]:
         result = self.parse_zero_or_more(separator, propagate_error=True)
-        if result[0].length < 2:
+        if len(result[0]) < 2:
             raise result[1]
         return result[0]
 
