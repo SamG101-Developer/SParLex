@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import abstractmethod
 from dataclasses import dataclass
-from enum import Enum
+from fastenum import Enum
 
 
 class SpecialToken(Enum):

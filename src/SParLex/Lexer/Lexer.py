@@ -1,5 +1,5 @@
 from SParLex.Lexer.Tokens import Token, TokenType, SpecialToken
-from enum import Enum
+from fastenum import Enum
 from type_intersections import Intersection
 import re
 
