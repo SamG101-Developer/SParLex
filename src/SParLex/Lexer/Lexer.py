@@ -26,9 +26,9 @@ class Lexer:
         current = 0
         output = []
 
-        tokens   = [t for t in self._token_class.__dict__["_member_names_"] if t.startswith("Tk")]
-        keywords = [t for t in self._token_class.__dict__["_member_names_"] if t.startswith("Kw")]
-        lexemes  = [t for t in self._token_class.__dict__["_member_names_"] if t.startswith("Lx")]
+        tokens   = [t for t in self._token_class._member_map_ if t.startswith("Tk")]
+        keywords = [t for t in self._token_class._member_map_ if t.startswith("Kw")]
+        lexemes  = [t for t in self._token_class._member_map_ if t.startswith("Lx")]
 
         tokens.sort(key=lambda t: len(self._token_class[t].value), reverse=True)
         keywords.sort(key=lambda t: len(self._token_class[t].value), reverse=True)
