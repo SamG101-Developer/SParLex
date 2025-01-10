@@ -6,7 +6,7 @@ from SParLex.Lexer.Tokens import TokenType
 from SParLex.Utils.ErrorFormatter import ErrorFormatter
 
 
-class ParserError(Exception):
+class ParserError(BaseException):
     def __init__(self, *args) -> None:
         super().__init__(*args)
 
