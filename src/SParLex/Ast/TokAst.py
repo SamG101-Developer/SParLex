@@ -6,10 +6,10 @@ from SParLex.Ast.Ast import Ast
 
 
 @dataclass
-class TokenAst(Ast):
+class TokAst(Ast):
     token: Token
 
     @staticmethod
-    def dummy(token_type: TokenType, info=None, pos=-1) -> TokenAst:
+    def dummy(token_type: TokenType, info=None, pos=-1) -> TokAst:
         # Quick way to create a token ast for a given token type.
-        return TokenAst(pos, Token(info or token_type.value, token_type))
+        return TokAst(pos, Token(info or token_type.value, token_type))

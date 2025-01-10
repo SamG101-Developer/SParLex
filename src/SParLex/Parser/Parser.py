@@ -65,22 +65,22 @@ class Parser(ABC):
         ...
 
     @parser_rule
-    def parse_eof(self) -> TokenAst:
+    def parse_eof(self) -> TokAst:
         p1 = self.parse_token(SpecialToken.EOF).parse_once()
         return p1
 
     # ===== TOKENS, KEYWORDS, & LEXEMES =====
 
     @parser_rule
-    def parse_lexeme(self, lexeme: TokenType) -> TokenAst:
+    def parse_lexeme(self, lexeme: TokenType) -> TokAst:
         p1 = self.parse_token(lexeme).parse_once()
         return p1
 
     @parser_rule
-    def parse_token(self, token_type: TokenType) -> TokenAst:
+    def parse_token(self, token_type: TokenType) -> TokAst:
         # For the "no token", instantly return a new token.
         if token_type == SpecialToken.NO_TOK:
-            return TokenAst(self.current_pos(), Token("", SpecialToken.NO_TOK))
+            return TokAst(self.current_pos(), Token("", SpecialToken.NO_TOK))
 
         # Check if the end of the file has been reached.
         if self._index > len(self._tokens) - 1:
@@ -108,7 +108,7 @@ class Parser(ABC):
             raise self._error
 
         # Otherwise, the parse was successful, so return a TokenAst as the correct position.
-        r = TokenAst(self._index, self._tokens[self._index])
+        r = TokAst(self._index, self._tokens[self._index])
         self._index += 1
         return r
 
