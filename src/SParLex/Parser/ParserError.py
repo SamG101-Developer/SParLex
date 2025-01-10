@@ -31,7 +31,7 @@ class ParserErrors:
             all_expected_tokens = "{'" + "' | '".join(all_expected_tokens).replace("\n", "\\n") + "'}"
 
             # Replace the "$" token with the set of expected tokens.
-            error_message = str(self).replace("$", all_expected_tokens)
+            error_message = str(self).replace("£", all_expected_tokens)
             error_message = error_formatter.error(self.pos, message=error_message, tag_message="Syntax Error")
 
             # Raise the error.

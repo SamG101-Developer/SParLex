@@ -102,7 +102,7 @@ class Parser(ABC):
                 self._error.expected_tokens.append(token_type)
                 raise self._error
 
-            new_error = f"Expected $, got '{self._tokens[self._index].token_type.name}'"
+            new_error = f"Expected £, got '{self._tokens[self._index].token_type.name}'"
             if self.store_error(self._index, new_error):
                 self._error.expected_tokens.append(token_type)
             raise self._error
