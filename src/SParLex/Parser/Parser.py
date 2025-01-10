@@ -86,7 +86,7 @@ class Parser(ABC):
         if self._index > len(self._tokens) - 1:
             new_error = f"Expected '{token_type}', got <EOF>"
             self.store_error(self.current_pos(), new_error)
-            raise new_error
+            raise self._error
 
         # Skip newlines and whitespace for non-newline parsing, and whitespace only for new-line parsing.
         if token_type != self._token_set.newline_token():
