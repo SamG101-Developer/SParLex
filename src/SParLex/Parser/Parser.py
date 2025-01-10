@@ -47,14 +47,14 @@ class Parser(ABC):
 
     # ===== PARSING =====
 
-    def parse(self) -> ProgramAst:
+    def parse(self) -> RootAst:
         from SParLex.Parser.ParserError import ParserError
 
         try:
             c0 = self.current_pos()
             p1 = self.parse_root().parse_once()
             p2 = self.parse_eof().parse_once()
-            return ProgramAst(c0, p1, p2)
+            return RootAst(c0, p1, p2)
 
         except ParserError as e:
             e.throw(self._err_fmt)
