@@ -56,7 +56,7 @@ class TokenType(Enum):
         return SpecialToken.ERR
 
     def print(self) -> str:
-        return f"<{self.name[2:]}>" if self.name[:2] == "Cm" else self.value
+        return self.value
 
     def __json__(self) -> str:
         return self.value

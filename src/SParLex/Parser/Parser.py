@@ -73,8 +73,7 @@ class Parser(ABC):
 
     @parser_rule
     def parse_lexeme(self, lexeme: TokenType) -> TokenAst:
-        compiled_lexeme = self._token_set[f"Cm{lexeme.name}"]
-        p1 = self.parse_token(compiled_lexeme).parse_once()
+        p1 = self.parse_token(lexeme).parse_once()
         return p1
 
     @parser_rule
