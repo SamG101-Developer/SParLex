@@ -22,6 +22,7 @@ def parser_rule[T](func: Callable[..., T]) -> Callable[..., ParserRuleHandler]:
 
 class Parser(ABC):
     _tokens: List[Token]
+    _token_len: int
     _token_set: Type[TokenType]
     _name: str
     _index: int
@@ -32,8 +33,9 @@ class Parser(ABC):
         from SParLex.Parser.ParserError import ParserErrors
         from SParLex.Utils.ErrorFormatter import ErrorFormatter
 
-        self._token_set = token_set
         self._tokens = tokens
+        self._token_len = len(tokens)
+        self._token_set = token_set
         self._name = file_name
         self._index = 0
         self._err_fmt = error_formatter or ErrorFormatter(token_set, self._tokens, file_name)
@@ -83,7 +85,7 @@ class Parser(ABC):
             return TokAst(self.current_pos(), Token("", SpecialToken.NO_TOK))
 
         # Check if the end of the file has been reached.
-        if self._index > len(self._tokens) - 1:
+        if self._index >= self._token_len:
             new_error = f"Expected '{token_type}', got <EOF>"
             self.store_error(self.current_pos(), new_error)
             raise self._error
