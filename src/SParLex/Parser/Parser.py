@@ -28,6 +28,8 @@ class Parser(ABC):
     _index: int
     _err_fmt: ErrorFormatter
     _error: Optional[ParserErrors.SyntaxError]
+    _newline_token: SpecialToken
+    _whitespace_token: SpecialToken
 
     def __init__(self, token_set: Type[TokenType], tokens: List[Token], file_name: str = "", error_formatter: Optional[ErrorFormatter] = None) -> None:
         from SParLex.Parser.ParserError import ParserErrors
@@ -40,6 +42,8 @@ class Parser(ABC):
         self._index = 0
         self._err_fmt = error_formatter or ErrorFormatter(token_set, self._tokens, file_name)
         self._error = ParserErrors.SyntaxError()
+        self._newline_token = token_set.newline_token()
+        self._whitespace_token = token_set.whitespace_token()
 
     def current_pos(self) -> int:
         return self._index
@@ -91,11 +95,11 @@ class Parser(ABC):
             raise self._error
 
         # Skip newlines and whitespace for non-newline parsing, and whitespace only for new-line parsing.
-        if token_type != self._token_set.newline_token():
-            while self._tokens[self._index].token_type == self._token_set.newline_token() or self._tokens[self._index].token_type == self._token_set.whitespace_token():
+        if token_type != self._newline_token:
+            while self._tokens[self._index].token_type == self._newline_token or self._tokens[self._index].token_type == self._whitespace_token:
                 self._index += 1
-        if token_type == self._token_set.newline_token():
-            while self._tokens[self._index].token_type == self._token_set.whitespace_token():
+        if token_type == self._newline_token:
+            while self._tokens[self._index].token_type == self._whitespace_token:
                 self._index += 1
 
         # Handle an incorrectly placed token.
