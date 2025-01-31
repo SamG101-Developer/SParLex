@@ -1,11 +1,11 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Callable, List, Optional, Type, TYPE_CHECKING
-import functools
 
+from SParLex.Ast import *
 from SParLex.Lexer.Tokens import Token, TokenType, SpecialToken
 from SParLex.Parser.ParserRuleHandler import ParserRuleHandler
-from SParLex.Ast import *
 
 if TYPE_CHECKING:
     from SParLex.Parser.ParserError import ParserError, ParserErrors
@@ -14,9 +14,8 @@ if TYPE_CHECKING:
 
 # Decorator that wraps the function in a ParserRuleHandler
 def parser_rule[T](func: Callable[..., T]) -> Callable[..., ParserRuleHandler]:
-    @functools.wraps(func)
     def wrapper(self, *args) -> ParserRuleHandler[T]:
-        return ParserRuleHandler(self, functools.partial(func, self, *args))
+        return ParserRuleHandler(self, lambda: func(self, *args))
     return wrapper
 
 
